@@ -31,7 +31,7 @@ def get_url(url):
       if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
             result = [ a['src'] for a in soup.find_all('source', src=True)]
-            return i[0]
+            return result[0]
       else:
            logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
 
