@@ -5,9 +5,11 @@ from datetime import datetime
 import uvicorn
 import requests
 from bs4 import BeautifulSoup
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, FileResponse
+from fastapi import FastAPI, HTTPException
+from feedgen.feed import FeedGenerator
+
 
 app = FastAPI()
 
@@ -22,7 +24,6 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-rss_feed_content = ""
 
 
 
@@ -34,6 +35,7 @@ def get_url(url):
             return result[0]
       else:
            logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
+
 
 
 def extract_home():
@@ -56,46 +58,36 @@ def extract_home():
 
 
 
-def generate_rss_feed(data):
-    rss_items = ""
-    for text, link in data:
-        rss_items += f"""
-        <item>
-            <title>{text}</title>
-            <link>{link}</link>
-        </item>
-        """
-
-    rss_feed = f"""
-    <?xml version="1.0" encoding="UTF-8" ?>
-    <rss version="2.0">
-        <channel>
-            <title>MrSpidy Hanimes.org Rss</title>
-            <link>https://hanimes.org/</link>
-            <description>This is A Unofficial RSS Feed for Hanimes.org by MrSpidy</description>
-            {rss_items}
-        </channel>
-    </rss>
-    """
-    return rss_feed
+def generate_rss_feed(site_name):
+    fg = FeedGenerator()
+    fg.title('Spidy RSS Feed')
+    fg.link(href='http://', rel='alternate')
+    fg.description('This is a Custom RSS feed of {site_name}')
+    fg.language('en')
+    links = link_gen()
+    for title, link in links:
+        entry = fg.add_entry()
+        entry.id(link)
+        entry.title(title)
+        entry.link(href=link)
+        entry.description(f'This is an article titled {title}')
+        now = datetime.datetime.now(pytz.utc)
+        entry.pubDate(now)
+    fg.rss_file("feed.xml")
+    return True
 
 
 
   
 async def update_rss_feed():
-    global rss_feed_content
     while True:
         try:
             logger.info(f"Fetching latest links at {datetime.now()}")
-            links = extract_home()
-            data = [ [ title,get_url(link)] for title,link in links ]
-            rss_feed_content = generate_rss_feed( data)
             logger.info("RSS feed updated successfully")
         except requests.HTTPError as e:
             logger.error(f"HTTP error occurred: {e}")
         except Exception as e:
             logger.error(f"An error occurred: {e}")
-
         await asyncio.sleep(600) 
 
 
@@ -105,10 +97,15 @@ async def startup_event():
      asyncio.create_task(update_rss_feed())
 
 
-@app.get("/rss", response_class=HTMLResponse)
-async def rss_feed():
-    return Response(content=rss_feed_content, media_type="application/rss+xml")
 
-
+@app.get("/rss/{feed_name}")
+async def get_rss(feed_id: str):
+    if os.path.exists(f"{feed_name}.xml"):
+        return FileResponse(f"{feed_name}.xml")
+    else:
+        generate_rss_feed(feed_name)
+        return FileResponse(f"{feed_name}.xml")
+    
+    
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=6969, reload=True)
