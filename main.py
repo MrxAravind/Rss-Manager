@@ -98,12 +98,12 @@ async def startup_event():
 
 
 
-@app.get("/rss/{feed_name}")
+@app.get("/rss")
 async def get_rss(feed_id: str):
     if os.path.exists(f"{feed_name}.xml"):
         return FileResponse(f"{feed_name}.xml")
     else:
-        generate_rss_feed(feed_name)
+        generate_rss_feed()
         return FileResponse(f"{feed_name}.xml")
     
     
