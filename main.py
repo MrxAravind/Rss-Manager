@@ -50,8 +50,10 @@ def extract_hanime():
                     soup = BeautifulSoup(response.content, 'html.parser')
                     result = [ a['src'] for a in soup.find_all('source', src=True)]
                     data.append([title,result[0]])         
+                else:
+                    logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
            return data
-      else:
+    else:
            logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
 
 
