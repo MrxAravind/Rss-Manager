@@ -82,7 +82,7 @@ async def update_rss_feed():
     while True:
         try:
             logger.info(f"Fetching latest links at {datetime.now()}")
-            generate_rss_feed()
+            generate_rss_feed("tamil")
             logger.info("RSS feed updated successfully")
         except requests.HTTPError as e:
             logger.error(f"HTTP error occurred: {e}")
@@ -103,7 +103,7 @@ async def get_rss(feed_name: str):
     if os.path.exists(f"{feed_name}.xml"):
         return FileResponse(f"{feed_name}.xml")
     else:
-        generate_rss_feed()
+        generate_rss_feed(feed_name)
         return FileResponse(f"{feed_name}.xml")
     
     
