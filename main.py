@@ -70,7 +70,7 @@ def generate_rss_feed(site_name):
         entry.title(title)
         entry.link(href=link)
         entry.description(f'This is an article titled {title}')
-        now = datetime.datetime.now(pytz.utc)
+        now = datetime.now(pytz.utc)
         entry.pubDate(now)
     fg.rss_file("feed.xml")
     return True
