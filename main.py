@@ -27,19 +27,12 @@ logger = logging.getLogger(__name__)
 
 
 
-def get_url(url):
-      response = requests.get(url)
-      if response.status_code == 200:
-            soup = BeautifulSoup(response.content, 'html.parser')
-            result = [ a['src'] for a in soup.find_all('source', src=True)]
-            return result[0]
-      else:
-           logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
 
 
 
-def extract_home():
+def extract_hanime():
     links = []
+    data = []
     url = 'https://hanimes.org/'
     response = requests.get(url)
     if response.status_code == 200:
@@ -51,20 +44,24 @@ def extract_home():
                 for div in div_tags:
                      link = div.find_all('a',href=True)[0]['href']
                      links.append([title,link])
-           return links 
-            
-    else:
+           for title,link in links:
+                response = requests.get(link)
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    result = [ a['src'] for a in soup.find_all('source', src=True)]
+                    data.append([title,result[0]])         
+           return data
+      else:
            logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
 
 
-
-def generate_rss_feed(site_name):
+def generate_rss_feed():
     fg = FeedGenerator()
     fg.title('Spidy RSS Feed')
     fg.link(href='http://', rel='alternate')
-    fg.description('This is a Custom RSS feed of {site_name}')
+    fg.description(f'This is a Custom RSS feed of {site_name}')
     fg.language('en')
-    links = link_gen()
+    links = extract_hanime()
     for title, link in links:
         entry = fg.add_entry()
         entry.id(link)
@@ -83,6 +80,7 @@ async def update_rss_feed():
     while True:
         try:
             logger.info(f"Fetching latest links at {datetime.now()}")
+            generate_rss_feed()
             logger.info("RSS feed updated successfully")
         except requests.HTTPError as e:
             logger.error(f"HTTP error occurred: {e}")
