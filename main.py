@@ -57,7 +57,7 @@ def extract_hanime():
            logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
 
 
-def generate_rss_feed():
+def generate_rss_feed(site_name):
     fg = FeedGenerator()
     fg.title('Spidy RSS Feed')
     fg.link(href='http://', rel='alternate')
@@ -98,8 +98,8 @@ async def startup_event():
 
 
 
-@app.get("/rss")
-async def get_rss(feed_id: str):
+@app.get("/rss/{feed_name}")
+async def get_rss(feed_name: str):
     if os.path.exists(f"{feed_name}.xml"):
         return FileResponse(f"{feed_name}.xml")
     else:
