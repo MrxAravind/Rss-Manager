@@ -71,7 +71,6 @@ def generate_rss_feed(name,links):
         entry.id(link)
         entry.title(title)
         entry.link(href=link)
-        entry.image( url=thumb)
         entry.description(f'This is an article titled {title}')
         now = datetime.now(pytz.utc)
         entry.pubDate(now)
