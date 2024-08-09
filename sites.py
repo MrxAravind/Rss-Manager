@@ -65,4 +65,10 @@ def extract_tamilblaster():
     return unique_links
 
 
+def extract_jav():
+    return []
+
+
+def mirror_yts():
+   return []
 
