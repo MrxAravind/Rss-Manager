@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from fastapi import FastAPI, HTTPException
 from feedgen.feed import FeedGenerator
-
+from sites import *
 
 app = FastAPI()
 
@@ -30,31 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 
-def extract_hanime():
-    links = []
-    data = []
-    url = 'https://hanimes.org/'
-    response = requests.get(url)
-    if response.status_code == 200:
-           soup = BeautifulSoup(response.text, 'html.parser')
-           ul_elements = soup.find_all('article', class_='TPost B')
-           for ul in ul_elements:
-                title = ul.find_all('h2', class_='Title')[0].get_text().strip()
-                div_tags = ul.find_all('div', class_='TPMvCn')
-                for div in div_tags:
-                     link = div.find_all('a',href=True)[0]['href']
-                     links.append([title,link])
-           for title,link in links:
-                response = requests.get(link)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    result = [ a['src'] for a in soup.find_all('source', src=True)]
-                    data.append([title,result[0]])         
-                else:
-                    logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
-           return data
-    else:
-           logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
 
 
 def generate_rss_feed(site_name):
@@ -74,8 +49,6 @@ def generate_rss_feed(site_name):
         entry.pubDate(now)
     fg.rss_file("feed.xml")
     return True
-
-
 
   
 async def update_rss_feed():
