@@ -66,7 +66,7 @@ def generate_rss_feed(name,links):
     fg.link(href='http://', rel='alternate')
     fg.description(f'This is a Custom RSS feed')
     fg.language('en')
-    for thumb,title, link in links:
+    for title, link in links:
         entry = fg.add_entry()
         entry.id(link)
         entry.title(title)
