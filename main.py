@@ -3,8 +3,6 @@ import logging
 import re,os,pytz
 from datetime import datetime
 import uvicorn
-import requests
-from bs4 import BeautifulSoup
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response, FileResponse
 from fastapi import FastAPI, HTTPException
