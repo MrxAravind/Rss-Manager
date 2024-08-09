@@ -56,7 +56,7 @@ def extract_tamilblaster():
             if "topic" in a['href'] and "APK" not in tag.get_text() and "Collection" not in tag.get_text():
                 links_info.append(a['href'])
     unique_links = set()
-    for href in links_info[:20]:
+    for href in links_info:
         for text, link in extract_tb(href):
             thumb = extract_thumb(href)
             text = text.replace(".torrent","")
