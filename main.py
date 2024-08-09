@@ -42,14 +42,20 @@ def update_sites():
 def site_check(name):
      if name == "tb":
            links = extract_tamilblaster()
+           return name,links
+     
      elif name == "hanime":
           links = extract_hanime()
+          return name,links
+     
      elif name == "yts":
            links = mirror_yts()
+           return name,links
+     
      elif name == "onejav":
           links = extract_jav()
-     if links:
-         return name,links
+          return name,links
+     
      else:
          return name,[]
 
@@ -65,7 +71,7 @@ def generate_rss_feed(name,links):
         entry.id(link)
         entry.title(title)
         entry.link(href=link)
-        entry.image( url=logo_url)
+        entry.image( url=thumb)
         entry.description(f'This is an article titled {title}')
         now = datetime.now(pytz.utc)
         entry.pubDate(now)
@@ -103,4 +109,4 @@ async def get_rss(feed_name: str):
     
     
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=6969, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=80, reload=True)
