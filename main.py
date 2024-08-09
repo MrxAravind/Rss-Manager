@@ -27,25 +27,49 @@ logger = logging.getLogger(__name__)
 
 
 
+def update_site():
+    site_extractors = {
+        "tb": extract_tamilblaster,
+        "hanime": extract_hanime,
+        "yts": mirror_yts,
+        "onejav": extract_jav
+    }
+    for site_name, extractor_function in site_extractors.items():
+        links = extractor_function()
+        generate_rss_feed(site_name, links)
 
 
+def site_check(name):
+     if name == "tb":
+           links = extract_tamilblaster()
+     elif name == "hanime":
+          links = extract_hanime()
+     elif name == "yts":
+           links = mirror_yts()
+     elif name == "onejav":
+          links = extract_jav()
+     if links:
+         return name,links
+     else:
+         return name,[]
 
-def generate_rss_feed(site_name):
+
+def generate_rss_feed(name,links):
     fg = FeedGenerator()
     fg.title('Spidy RSS Feed')
     fg.link(href='http://', rel='alternate')
-    fg.description(f'This is a Custom RSS feed of {site_name}')
+    fg.description(f'This is a Custom RSS feed')
     fg.language('en')
-    links = extract_tamilblaster()
     for thumb,title, link in links:
         entry = fg.add_entry()
         entry.id(link)
         entry.title(title)
         entry.link(href=link)
+        entry.image( url=logo_url)
         entry.description(f'This is an article titled {title}')
         now = datetime.now(pytz.utc)
         entry.pubDate(now)
-    fg.rss_file("feed.xml")
+    fg.rss_file(f"{name}.xml")
     return True
 
   
@@ -53,7 +77,7 @@ async def update_rss_feed():
     while True:
         try:
             logger.info(f"Fetching latest links at {datetime.now()}")
-            generate_rss_feed("tamil")
+            update_sites()
             logger.info("RSS feed updated successfully")
         except requests.HTTPError as e:
             logger.error(f"HTTP error occurred: {e}")
@@ -74,7 +98,7 @@ async def get_rss(feed_name: str):
     if os.path.exists(f"{feed_name}.xml"):
         return FileResponse(f"{feed_name}.xml")
     else:
-        generate_rss_feed(feed_name)
+        generate_rss_feed(site_check(feed_name))
         return FileResponse(f"{feed_name}.xml")
     
     
