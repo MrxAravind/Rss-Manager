@@ -34,6 +34,19 @@ def extract_hanime():
 
 def extract_tamilblaster():
     url = 'https://1tamilblasters.mov'
+    def extract_tb(url):
+          pattern = re.compile(r'https://1tamilblasters\.mov/applications/core/interface/file/attachment\.php\?.*')
+          response = requests.get(url)
+          response.raise_for_status()
+          soup = BeautifulSoup(response.content, 'html.parser')
+          return [(a.get_text(strip=True), a['href']) for a in soup.find_all('a', href=True) if pattern.match(a['href'])]
+    def extract_thumb(url):
+          pattern = re.compile(r'https://picsxtra.com/images/*')
+          response = requests.get(url)
+          response.raise_for_status()
+          soup = BeautifulSoup(response.content, 'html.parser')
+          links = [ L.find_all('a', href=True) for L in [ a for a in soup.find_all('p')]]
+          return links[4][0].find_all('img')[0]["data-src"]
     response = requests.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -43,14 +56,13 @@ def extract_tamilblaster():
             if "topic" in a['href'] and "APK" not in tag.get_text() and "Collection" not in tag.get_text():
                 links_info.append(a['href'])
     unique_links = set()
-    for href in links_info[:100]:
-        pattern = re.compile(r'https://1tamilblasters\.mov/applications/core/interface/file/attachment\.php\?.*')
-        response = requests.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
-        result = [(a.get_text(strip=True), a['href']) for a in soup.find_all('a', href=True) if pattern.match(a['href'])]
-        for text, link in result:
-            if (text, link) not in unique_links:
-                print(f"Text: {text}\nLink: {link}\n")
-                unique_links.add((text, link))
+    for href in links_info[:20]:
+        for text, link in extract_links(href):
+            thumb = extract_thumb(href)
+            text = text.replace(".torrent","")
+            if (thumb,text, link) not in unique_links:
+                unique_links.add((thumb,text, link))
     return unique_links
+
+
+
