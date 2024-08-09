@@ -57,7 +57,7 @@ def extract_tamilblaster():
                 links_info.append(a['href'])
     unique_links = set()
     for href in links_info[:20]:
-        for text, link in extract_links(href):
+        for text, link in extract_tb(href):
             thumb = extract_thumb(href)
             text = text.replace(".torrent","")
             if (thumb,text, link) not in unique_links:
