@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 
-def update_site():
+def update_sites():
     site_extractors = {
         "tb": extract_tamilblaster,
         "hanime": extract_hanime,
