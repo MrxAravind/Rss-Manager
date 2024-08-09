@@ -36,7 +36,7 @@ def generate_rss_feed(site_name):
     fg.link(href='http://', rel='alternate')
     fg.description(f'This is a Custom RSS feed of {site_name}')
     fg.language('en')
-    links = extract_hanime()
+    links = extract_tamilblaster()
     for title, link in links:
         entry = fg.add_entry()
         entry.id(link)
