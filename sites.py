@@ -1,6 +1,6 @@
 import requests,re
 from bs4 import BeautifulSoup
-
+from urllib.parse import urljoin
 
 
 
@@ -75,6 +75,35 @@ def extract_tamilblaster():
 
 def extract_jav():
     return []
+
+def extract_onejav_actress():
+    base_url='https://onejav.com'
+    torrent_links=[]
+    try:
+        response=requests.get(f'{base_url}/actress/')
+        response.raise_for_status()
+        soup=BeautifulSoup(response.content,'html.parser')
+    except requests.RequestException as e:
+        print(f"Error fetching the initial page: {e}")
+        return []
+    a_tags=soup.find_all('a')
+    for tag in a_tags:
+        href=tag.get('href')
+        if href and "/actress/" in href and href!="/actress/":
+            full_url=urljoin(base_url,href)
+            try:
+                response=requests.get(full_url)
+                response.raise_for_status()
+                soup=BeautifulSoup(response.content,'html.parser')
+            except requests.RequestException as e:
+                print(f"Error fetching {full_url}: {e}")
+                continue
+            a_tags=soup.find_all('a')
+            torrent_links.extend(base_url+href for tag in a_tags if (href:=tag.get('href')) and ".torrent" in href)
+    return torrent_links
+
+
+
 
 
 def mirror_yts():
