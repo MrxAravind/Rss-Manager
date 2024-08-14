@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 
 
 
+
 def extract_hanime():
     links = []
     data = []
@@ -16,12 +17,15 @@ def extract_hanime():
                 div_tags = ul.find_all('div', class_='TPMvCn')
                 for div in div_tags:
                      link = div.find_all('a',href=True)[0]['href']
-                     links.append([title,link])
-           for title,link in links:
+                     imgs = ul.find_all('img',src=True)
+                     img = [ img['src'] for img in imgs][0]
+                     links.append([title,img,link])
+           for title,img,link in links:
                 response = requests.get(link)
                 if response.status_code == 200:
                     soup = BeautifulSoup(response.content, 'html.parser')
                     result = [ a['src'] for a in soup.find_all('source', src=True)]
+                    print([title,img,result[0]])
                     data.append([title,result[0]])         
                 else:
                     logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
