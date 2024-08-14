@@ -7,32 +7,36 @@ from bs4 import BeautifulSoup
 def extract_hanime():
     links = []
     data = []
-    url = 'https://hanimes.org/'
-    response = requests.get(url)
-    if response.status_code == 200:
-           soup = BeautifulSoup(response.text, 'html.parser')
-           ul_elements = soup.find_all('article', class_='TPost B')
-           for ul in ul_elements:
-                title = ul.find_all('h2', class_='Title')[0].get_text().strip()
-                div_tags = ul.find_all('div', class_='TPMvCn')
-                for div in div_tags:
-                     link = div.find_all('a',href=True)[0]['href']
-                     imgs = ul.find_all('img',src=True)
-                     img = [ img['src'] for img in imgs][0]
-                     links.append([title,img,link])
-           for title,img,link in links:
-                response = requests.get(link)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    result = [ a['src'] for a in soup.find_all('source', src=True)]
-                    print([title,img,result[0]])
-                    data.append([title,result[0]])         
-                else:
+    category = ["new-hanime","tsundere","harem","reverse","milf","romance","school","fantasy","ahegao","public","ntr","gb","incest","uncensored","ugly-bastard"]
+    url = 'https://hanimes.org/category/'
+    for cate in category:
+         response = requests.get(url+cate)
+         if response.status_code == 200:
+              soup = BeautifulSoup(response.text, 'html.parser')
+              ul_elements = soup.find_all('article', class_='TPost B')
+              for ul in ul_elements:
+                   title = ul.find_all('h2', class_='Title')[0].get_text().strip()
+                   div_tags = ul.find_all('div', class_='TPMvCn')
+                   for div in div_tags:
+                        link = div.find_all('a',href=True)[0]['href']
+                        imgs = ul.find_all('img',src=True)
+                        img = [ img['src'] for img in imgs][0]
+                        links.append([title,img,link])
+              for title,img,link in links:
+                  response = requests.get(link)
+                  if response.status_code == 200:
+                      soup = BeautifulSoup(response.content, 'html.parser')
+                      result = [ a['src'] for a in soup.find_all('source', src=True)]
+                      print([title,img,result[0]])
+                      d = [title,result[0]]
+                      if d not in data:
+                         data.append(d)         
+                  else:
                     logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
-           return data
-    else:
-           logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
-
+              return data
+         else:
+                logger.error(f"Failed to retrieve content. Status code: {response.status_code}")
+                return []
 
 
 
