@@ -27,7 +27,7 @@ def update_rss_periodically():
         
         time.sleep(UPDATE_INTERVAL)
 
-@app.route('/rss')
+@app.route('/')
 def serve_rss():
     """Serve the aggregated RSS feed"""
     return send_file(
