@@ -4,3 +4,5 @@ requests
 beautifulsoup4
 feedgen
 pytz
+feedparser
+PyRSS2Gen
