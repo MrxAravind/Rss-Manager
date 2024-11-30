@@ -1,0 +1,143 @@
+name: Update RSS Feed
+on:
+  schedule:
+    - cron: '0 */4 * * *'  # Run every 4 hours
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install feedparser PyRSS2Gen lxml requests
+
+    - name: Validate Feed Sources
+      run: |
+        # Basic URL validation
+        python -c "
+import sys
+import requests
+
+def validate_url(url):
+    try:
+        response = requests.head(url, timeout=10)
+        return response.status_code == 200
+    except Exception as e:
+        print(f'Invalid URL {url}: {e}')
+        return False
+
+feed_urls = [
+    'https://xxxclub.to/feed/MG.xml',
+    'https://www.torlock.com/adult/rss.xml',
+    'https://pornrips.to/feed/torrents'
+]
+
+invalid_urls = [url for url in feed_urls if not validate_url(url)]
+if invalid_urls:
+    print('Invalid feed sources:')
+    print('\n'.join(invalid_urls))
+    sys.exit(1)
+"
+
+    - name: Generate RSS Feed
+      run: |
+        python feed_aggregator.py \
+          https://xxxclub.to/feed/MG.xml \
+          https://www.torlock.com/adult/rss.xml \
+          https://pornrips.to/feed/torrents \
+          --output feed.xml
+
+    - name: Validate Generated Feed
+      run: |
+        # XML well-formedness check
+        xmllint --noout feed.xml || exit 1
+        
+        # Optional: Basic RSS validation
+        python -c "
+import xml.etree.ElementTree as ET
+
+try:
+    tree = ET.parse('feed.xml')
+    root = tree.getroot()
+    
+    # Basic RSS validation
+    assert root.tag == 'rss', 'Not a valid RSS feed'
+    assert 'version' in root.attrib, 'Missing RSS version'
+    
+    channel = root.find('channel')
+    assert channel is not None, 'Missing channel element'
+    
+    # Check for at least one item
+    items = channel.findall('item')
+    assert len(items) > 0, 'No feed items found'
+
+except Exception as e:
+    print(f'Feed validation failed: {e}')
+    exit(1)
+"
+
+    - name: Compress Feed
+      run: |
+        gzip -k feed.xml
+        echo "FEED_SIZE=$(stat -c '%s' feed.xml)" >> $GITHUB_ENV
+        echo "GZIPPED_FEED_SIZE=$(stat -c '%s' feed.xml.gz)" >> $GITHUB_ENV
+
+    - name: Check Feed Size
+      run: |
+        echo "Original Feed Size: $FEED_SIZE bytes"
+        echo "Gzipped Feed Size: $GZIPPED_FEED_SIZE bytes"
+        
+        # Optional size limit (e.g., 10MB)
+        if [ $FEED_SIZE -gt 10485760 ]; then
+          echo "Feed too large, aborting"
+          exit 1
+        fi
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
+        publish_branch: gh-pages
+        force_orphan: true
+        full_commit_message: Update RSS Feed
+        files: |
+          feed.xml
+          feed.xml.gz
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: |
+          feed.xml
+          feed.xml.gz
+        tag_name: rss-feed-${{ github.run_number }}
+        body: |
+          ## RSS Feed Release
+          - Feed Generated: $(date)
+          - Original Size: ${{ env.FEED_SIZE }} bytes
+          - Gzipped Size: ${{ env.GZIPPED_FEED_SIZE }} bytes
+
+    - name: Notify Telegram (Optional)
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_CHAT_ID }}
+        token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        message: |
+          🔔 RSS Feed Updated
+          Repository: ${{ github.repository }}
+          Run ID: ${{ github.run_id }}
+          Feed Size: ${{ env.FEED_SIZE }} bytes
+
+    - name: Clean Up
+      run: |
+        rm -f feed.xml feed.xml.gz
